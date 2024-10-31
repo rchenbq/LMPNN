@@ -74,6 +74,18 @@ if __name__ == "__main__":
 
     lines = read_log_lines(args.log_file)
     df = aggregate_evaluations(lines, 'NN evaluate valid', collect_metrics=['mrr'])
+    if args.log_file.find('FB15k-237') != -1:
+        df.to_csv('FB15k-237_valid.csv')
+    elif args.log_file.find('FB15k') != -1:
+        df.to_csv('FB15k_valid.csv')
+    elif args.log_file.find('NELL') != -1:
+        df.to_csv('NELL_valid.csv')
     print(df.to_markdown())
     df = aggregate_evaluations(lines, 'NN evaluate test', collect_metrics=['mrr'])
+    if args.log_file.find('FB15k-237') != -1:
+        df.to_csv('FB15k-237_test.csv')
+    elif args.log_file.find('FB15k') != -1:
+        df.to_csv('FB15k_test.csv')
+    elif args.log_file.find('NELL') != -1:
+        df.to_csv('NELL_test.csv')
     print(df.to_markdown())
