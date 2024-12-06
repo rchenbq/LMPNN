@@ -11,7 +11,6 @@ import json
 import heapq
 import argparse
 import os
-
 import time
 
 Triple = Tuple[int, int, int]
@@ -21,13 +20,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint_rank", type = int, default = 1000, choices = [100, 200, 500, 1000])
 parser.add_argument("--checkpoint_epoch", type = int, default = 100, choices = [50, 100])
 parser.add_argument("--max_num_edges", type = int, default = 10)
-parser.add_argument("--num_subgraphs", type = int, default = 1000000)
-parser.add_argument("--p", type = float, default = 0.9)
+parser.add_argument("--num_subgraphs", type = int, default = 100000)
+parser.add_argument("--p", type = float, default = 0.95)
+parser.add_argument("--delta", type = float, default = 10)
 
 
-def get_subgraph_triples(entities: defaultdict, num_edges: int, p: float):
-    # get a subgraph triple with a fixed number of edges
-    
+def get_subgraph_triples(entities: defaultdict, num_edges: int, p: float, edges_score: dict, d) -> list:
     heap = []
     heapq.heapify(heap)
     v = random.choice(list(entities.keys()))
@@ -43,8 +41,7 @@ def get_subgraph_triples(entities: defaultdict, num_edges: int, p: float):
                     continue
                 if edge[2] == v and (edge[0] in visited):
                     continue
-                # edge_score = edges_score[edge]
-                heapq.heappush(heap, (random.random(), edge))
+                heapq.heappush(heap, (random.random()*d + edges_score[edge], edge))
 
             visited.add(v)
         
@@ -70,21 +67,16 @@ if __name__ == "__main__":
     max_num_edges = arg.max_num_edges
     num_subgraphs = arg.num_subgraphs
     p = arg.p
+    d= arg.delta
 
     for kgname in kgs:
         print('Processing ' + kgname)
-        # triple_path = os.path.join('data', kgname + '-betae', 'train_kg.tsv')
-        # kgidx_path = os.path.join('data', kgname + '-betae', 'kgindex.json')
-        # kgidx = KGIndex.load(kgidx_path) # load kgindex
-        # kg = KnowledgeGraph.create(triple_files = triple_path, kgindex = kgidx) # load knowledge graph
-
+        
         print("Loading edges score for " + kgname)
         edges_score = torch.load('score/complex/' + kgname + '-rank' + str(rank) + '-epoch' + str(epoch) + '-edges_score.pt') # load edges score
-        # sorted_edges_score = sorted(edges_score.items(), key = lambda x: x[1])
         print("Edges score loaded")
 
         entities = defaultdict(list)
-
         for triple in edges_score.keys():
             if len(entities[triple[0]]) < max_num_edges:
                 entities[triple[0]].append(triple)
@@ -105,7 +97,7 @@ if __name__ == "__main__":
         
         subgraphs = []
         for i in tqdm(range(num_subgraphs)):
-            subgraph_triples = get_subgraph_triples(entities, max_num_edges, p)
+            subgraph_triples = get_subgraph_triples(entities, max_num_edges, p, edges_score,d)
             subgraphs.append(subgraph_triples)
         
         print(len(subgraphs))
@@ -121,6 +113,6 @@ if __name__ == "__main__":
         n = random.randint(0, len(subgraphs)-1)
         print(n)
         print(subgraphs[n])
-
+        
         save_path = os.path.join('subgraphs/complex', kgname + '-rank' + str(rank) + '-epoch' + str(epoch) + '-subgraphs.pt')
         torch.save(subgraphs, save_path)
