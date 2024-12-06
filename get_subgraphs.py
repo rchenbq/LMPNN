@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint_rank", type = int, default = 1000, choices = [100, 200, 500, 1000])
 parser.add_argument("--checkpoint_epoch", type = int, default = 100, choices = [50, 100])
 parser.add_argument("--max_num_edges", type = int, default = 10)
-parser.add_argument("--num_subgraphs", type = int, default = 10000)
+parser.add_argument("--num_subgraphs", type = int, default = 100000)
 parser.add_argument("--p", type = float, default = 0.95)
 parser.add_argument("--delta", type = float, default = 10)
 
